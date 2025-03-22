@@ -1,7 +1,7 @@
 // src/controllers/auth.controller.js
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.model');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/email.service');
+// const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/email.service');
 
 // Register new user
 exports.register = async (req, res) => {
@@ -27,7 +27,7 @@ exports.register = async (req, res) => {
     
     // Send verification email
     const verificationToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    await sendVerificationEmail(user.email, verificationToken);
+    // await sendVerificationEmail(user.email, verificationToken);
     
     res.status(201).json({ 
       message: 'User registered successfully. Please check your email to verify your account.',
@@ -122,7 +122,7 @@ exports.forgotPassword = async (req, res) => {
     const resetToken = jwt.sign({ id: user._id }, process.env.JWT_RESET_SECRET, { expiresIn: '1h' });
     
     // Send reset email
-    await sendPasswordResetEmail(user.email, resetToken);
+    // await sendPasswordResetEmail(user.email, resetToken);
     
     res.status(200).json({ message: 'Password reset email sent' });
   } catch (error) {

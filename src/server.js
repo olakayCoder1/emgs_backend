@@ -4,17 +4,19 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const swaggerUi = require('swagger-ui-express'); 
+const swaggerSpec = require('./config/swagger'); 
 require('dotenv').config();
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
-const userRoutes = require('./routes/user.routes');
+// const userRoutes = require('./routes/user.routes');
 const courseRoutes = require('./routes/course.routes');
 const lessonRoutes = require('./routes/lesson.routes');
 const serviceRoutes = require('./routes/service.routes');
 const crmRoutes = require('./routes/crm.routes');
 const adminRoutes = require('./routes/admin.routes');
-const paymentRoutes = require('./routes/payment.routes');
+// const paymentRoutes = require('./routes/payment.routes');
 
 // Initialize express app
 const app = express();
@@ -37,13 +39,14 @@ mongoose
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+// app.use('/api/users', userRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/crm', crmRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); 
+// app.use('/api/payments', paymentRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -52,7 +55,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
