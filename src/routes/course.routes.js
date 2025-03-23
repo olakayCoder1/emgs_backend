@@ -19,7 +19,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.get('/', courseController.getAllCourses);
+router.get('/',authenticate, courseController.getAllCourses);
 
 /**
  * @swagger
@@ -44,7 +44,7 @@ router.get('/', courseController.getAllCourses);
  *       500:
  *         description: Internal server error
  */
-router.get('/:id', courseController.getCourseById);
+router.get('/:id',authenticate, courseController.getCourseById);
 
 /**
  * @swagger

@@ -1,6 +1,7 @@
 const Course = require('../models/course.model');
 const User = require('../models/user.model');
 const Notification = require('../models/notification.model');
+const Progress = require('../models/progress.model');
 const { successResponse, errorResponse, badRequestResponse } = require('../utils/custom_response/responses');
 
 
@@ -8,6 +9,10 @@ const { successResponse, errorResponse, badRequestResponse } = require('../utils
 exports.getAllCourses = async (req, res) => {
   try {
     const { category } = req.query;
+    const userId = req.user ? req.user.id : null;
+    console.log(userId)
+    console.log(userId)
+    console.log(userId)
     
     let query = { isPublished: true };
     
@@ -20,6 +25,30 @@ exports.getAllCourses = async (req, res) => {
       .select('title description category thumbnail isFree price')
       .sort({ createdAt: -1 });
     
+    // Add progress information if user is authenticated
+    if (userId) {
+      const progressRecords = await Progress.find({ userId });
+      
+      const coursesWithProgress = courses.map(course => {
+        const courseObj = course.toObject();
+        const progressRecord = progressRecords.find(
+          p => p.courseId.toString() === course._id.toString()
+        );
+        
+        if (progressRecord) {
+          courseObj.progress = progressRecord.progress;
+          courseObj.isCompleted = progressRecord.isCompleted;
+        } else {
+          courseObj.progress = 0;
+          courseObj.isCompleted = false;
+        }
+        
+        return courseObj;
+      });
+      
+      return successResponse(coursesWithProgress, res);
+    }
+    
     return successResponse(courses, res);
   } catch (error) {
     return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
@@ -29,17 +58,45 @@ exports.getAllCourses = async (req, res) => {
 // Get single course by ID
 exports.getCourseById = async (req, res) => {
   try {
-    console.log(req.params.id)
-    console.log(req.params.id)
-    console.log(req.params.id)
-    console.log(req.params.id)
+    const userId = req.user ? req.user.id : null;
+    console.log(userId)
+    console.log(userId)
+    console.log(userId)
+    
     const course = await Course.findById(req.params.id)
       .populate('lessons')
-      .populate('quizzes')
+      .populate('quizzes');
       // .populate('assignments');
     
     if (!course) {
       return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
+    }
+    
+    // Add progress information if user is authenticated
+    if (userId) {
+      const progress = await Progress.findOne({ 
+        userId, 
+        courseId: req.params.id 
+      }).populate('lastAccessedLesson');
+      console.log(progress)
+      console.log(progress)
+      console.log(progress)
+      if (progress) {
+        const courseObj = course.toObject();
+        courseObj.progress = progress.progress;
+        courseObj.isCompleted = progress.isCompleted;
+        courseObj.lastAccessedLesson = progress.lastAccessedLesson;
+        
+        // Add completion status to lessons
+        if (courseObj.lessons && courseObj.lessons.length > 0) {
+          courseObj.lessons = courseObj.lessons.map(lesson => {
+            lesson.isCompleted = progress.completedLessons.includes(lesson._id);
+            return lesson;
+          });
+        }
+        
+        return successResponse(courseObj, res);
+      }
     }
     
     return successResponse(course, res);

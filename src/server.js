@@ -16,6 +16,8 @@ const lessonRoutes = require('./routes/lesson.routes');
 const serviceRoutes = require('./routes/service.routes');
 const crmRoutes = require('./routes/crm.routes');
 const adminRoutes = require('./routes/admin.routes');
+const progressRoutes = require('./routes/progress.routes');
+const notificationRoutes = require('./routes/notification.routes');
 // const paymentRoutes = require('./routes/payment.routes');
 
 // Initialize express app
@@ -45,6 +47,8 @@ app.use('/api/v1/lessons', lessonRoutes);
 app.use('/api/v1/services', serviceRoutes);
 app.use('/api/v1/crm', crmRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/progress', progressRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 // app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); 
 
 app.use('*', (req, res) => {

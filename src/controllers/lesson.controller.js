@@ -1,5 +1,6 @@
 const Lesson = require('../models/lesson.model');
 const Course = require('../models/course.model');
+const Progress = require('../models/progress.model');
 const { 
   successResponse, 
   badRequestResponse, 
@@ -10,11 +11,27 @@ const {
 exports.getLessonsForCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
+    const userId = req.user ? req.user.id : null;  // Handle both authenticated and unauthenticated users
     
     const lessons = await Lesson.find({ 
       courseId,
       isPublished: true 
     }).sort({ order: 1 });
+    
+    // If user is authenticated, add completion status
+    if (userId) {
+      const progress = await Progress.findOne({ userId, courseId });
+      
+      if (progress) {
+        const lessonsWithProgress = lessons.map(lesson => {
+          const lessonObj = lesson.toObject();
+          lessonObj.isCompleted = progress.completedLessons.includes(lesson._id);
+          return lessonObj;
+        });
+        
+        return successResponse(lessonsWithProgress, res);
+      }
+    }
     
     return successResponse(lessons, res);
   } catch (error) {
@@ -26,9 +43,29 @@ exports.getLessonsForCourse = async (req, res) => {
 exports.getLessonById = async (req, res) => {
   try {
     const lesson = await Lesson.findById(req.params.id);
+    const userId = req.user ? req.user.id : null;
     
     if (!lesson) {
       return badRequestResponse('Lesson not found', 'NOT_FOUND', 404, res);
+    }
+    
+    // Add completion status if user is authenticated
+    if (userId) {
+      const progress = await Progress.findOne({ 
+        userId, 
+        courseId: lesson.courseId 
+      });
+      
+      if (progress) {
+        const lessonObj = lesson.toObject();
+        lessonObj.isCompleted = progress.completedLessons.includes(lesson._id);
+        
+        // Update last accessed lesson
+        progress.lastAccessedLesson = lesson._id;
+        await progress.save();
+        
+        return successResponse(lessonObj, res);
+      }
     }
     
     return successResponse(lesson, res);
