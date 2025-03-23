@@ -1,6 +1,10 @@
-// src/controllers/lesson.controller.js
 const Lesson = require('../models/lesson.model');
 const Course = require('../models/course.model');
+const { 
+  successResponse, 
+  badRequestResponse, 
+  internalServerErrorResponse 
+} = require('../utils/custom_response/responses');
 
 // Get lessons for a course
 exports.getLessonsForCourse = async (req, res) => {
@@ -12,9 +16,9 @@ exports.getLessonsForCourse = async (req, res) => {
       isPublished: true 
     }).sort({ order: 1 });
     
-    res.status(200).json(lessons);
+    return successResponse(lessons, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -24,12 +28,12 @@ exports.getLessonById = async (req, res) => {
     const lesson = await Lesson.findById(req.params.id);
     
     if (!lesson) {
-      return res.status(404).json({ message: 'Lesson not found' });
+      return badRequestResponse('Lesson not found', 'NOT_FOUND', 404, res);
     }
     
-    res.status(200).json(lesson);
+    return successResponse(lesson, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -41,7 +45,7 @@ exports.createLesson = async (req, res) => {
     // Check if course exists
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
     }
     
     const lesson = new Lesson({
@@ -63,12 +67,12 @@ exports.createLesson = async (req, res) => {
       { $push: { lessons: lesson._id } }
     );
     
-    res.status(201).json({
+    return successResponse({
       message: 'Lesson created successfully',
       lessonId: lesson._id
-    });
+    }, res, 201);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -92,15 +96,14 @@ exports.updateLesson = async (req, res) => {
     );
     
     if (!lesson) {
-      return res.status(404).json({ message: 'Lesson not found' });
+      return badRequestResponse('Lesson not found', 'NOT_FOUND', 404, res);
     }
     
-    res.status(200).json({
-      message: 'Lesson updated successfully',
-      lesson
-    });
+    return successResponse({ lesson }, res, 200,
+      'Lesson updated successfully'
+    );
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -110,7 +113,7 @@ exports.deleteLesson = async (req, res) => {
     const lesson = await Lesson.findById(req.params.id);
     
     if (!lesson) {
-      return res.status(404).json({ message: 'Lesson not found' });
+      return badRequestResponse('Lesson not found', 'NOT_FOUND', 404, res);
     }
     
     // Remove lesson from course
@@ -121,8 +124,8 @@ exports.deleteLesson = async (req, res) => {
     
     await Lesson.findByIdAndDelete(req.params.id);
     
-    res.status(200).json({ message: 'Lesson deleted successfully' });
+    return successResponse(null, res,204,'Lesson deleted successfully');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };

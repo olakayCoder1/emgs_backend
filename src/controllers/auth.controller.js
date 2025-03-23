@@ -1,40 +1,40 @@
-// src/controllers/auth.controller.js
 const jwt = require('jsonwebtoken');
+const emailService = require('../services/email.service');
+const bcrypt = require('bcryptjs');
+const axios = require('axios');
 const User = require('../models/user.model');
-// const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/email.service');
+const { URLSearchParams } = require('url');
+const { successResponse, badRequestResponse, internalServerErrorResponse } = require('../utils/custom_response/responses');
 
 // Register new user
 exports.register = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, phone } = req.body;
-    
+    const { fullName, email, password, phone } = req.body;
+
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this email' });
+      return badRequestResponse('User already exists with this email', 'BAD_REQUEST', 400, res);
     }
-    
+
     // Create new user
     const user = new User({
-      firstName,
-      lastName,
+      fullName,
       email,
       password,
       phone
     });
-    
+
     await user.save();
-    
+
     // Send verification email
     const verificationToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    // await sendVerificationEmail(user.email, verificationToken);
-    
-    res.status(201).json({ 
-      message: 'User registered successfully. Please check your email to verify your account.',
-      userId: user._id
-    });
+    await emailService.sendVerificationEmail(user.email, user.fullName, verificationToken);
+
+    return successResponse({userId: user._id }, res, 201,  'User registered successfully. Please check your email to verify your account.');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error); // Log the error for debugging
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -42,24 +42,24 @@ exports.register = async (req, res) => {
 exports.verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
-    
+
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
+
     // Update user
     const user = await User.findByIdAndUpdate(
       decoded.id,
       { isVerified: true },
       { new: true }
     );
-    
+
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
     }
-    
-    res.status(200).json({ message: 'Email verified successfully' });
+
+    return successResponse({ message: 'Email verified successfully' }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return badRequestResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -67,43 +67,47 @@ exports.verifyEmail = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+    console.log("Login attempt for:", email);
+    console.log("Password provided:", password);
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
     }
-    
+
+
     // Check if password is correct
     const isMatch = await user.comparePassword(password);
+    console.log("Password match result:", isMatch);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return badRequestResponse('Invalid credentials', 'BAD_REQUEST', 400, res);
     }
-    
+
+
     // Check if user is verified
     if (!user.isVerified) {
-      return res.status(401).json({ message: 'Please verify your email first' });
+      return badRequestResponse('Please verify your email first', 'UNAUTHORIZED', 401, res);
     }
-    
+
     // Generate token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
-    
-    res.status(200).json({
+
+    return successResponse({
       token,
       user: {
         id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
+        fullName: user.fullName,
+        phone: user.phone,
         email: user.email,
         role: user.role
       }
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -111,22 +115,22 @@ exports.login = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
     }
-    
+
     // Generate reset token
-    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_RESET_SECRET, { expiresIn: '1h' });
-    
-    // Send reset email
-    // await sendPasswordResetEmail(user.email, resetToken);
-    
-    res.status(200).json({ message: 'Password reset email sent' });
+    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    // Send reset email (dummy placeholder function)
+    await emailService.sendPasswordResetEmail(user.email, resetToken);
+
+    return successResponse({ message: 'Password reset email sent' }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message,res, 500);
   }
 };
 
@@ -134,26 +138,116 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
-    const { newPassword } = req.body;
-    
+    const { password } = req.body;
+
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
-    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
     // Find user
     const user = await User.findById(decoded.id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
     }
-    
+
     // Update password
-    user.password = newPassword;
+    user.password = password;
     await user.save();
-    
-    res.status(200).json({ message: 'Password reset successfully' });
+
+    return successResponse({ message: 'Password reset successfully' }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
+// Google login route (GET request)
+exports.googleLogin = (req, res) => {
+  const { redirect_url } = req.query;
+  if (!redirect_url) {
+    return badRequestResponse('redirect_url param is required', 'BAD_REQUEST', 400, res);
+  }
 
+  // Prepare the state parameter (used to send additional data like redirect URL)
+  const state = JSON.stringify({ frontend_redirect_url: redirect_url });
 
+  // Prepare Google OAuth 2.0 URL
+  const googleAuthUrl = 'https://accounts.google.com/o/oauth2/auth';
+  const params = new URLSearchParams({
+    client_id: process.env.GOOGLE_CLIENT_ID,
+    redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+    response_type: 'code',
+    scope: 'openid profile email',
+    state: encodeURIComponent(state),
+  });
+
+  // Redirect user to Google OAuth 2.0 authorization URL
+  res.redirect(`${googleAuthUrl}?${params.toString()}`);
+};
+
+// Google callback route (GET request)
+exports.googleCallback = async (req, res) => {
+  try {
+    const { code, state } = req.query;
+
+    if (!code || !state) {
+      return badRequestResponse('Missing required parameters', 'BAD_REQUEST', 400, res);
+    }
+
+    // Decode the state parameter to get the frontend redirect URL
+    const { frontend_redirect_url } = JSON.parse(decodeURIComponent(state));
+
+    // Step 1: Exchange authorization code for access token
+    const tokenUrl = 'https://oauth2.googleapis.com/token';
+    const tokenData = new URLSearchParams({
+      code,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      grant_type: 'authorization_code',
+    });
+
+    const tokenResponse = await axios.post(tokenUrl, tokenData);
+    const { access_token } = tokenResponse.data;
+
+    // Step 2: Fetch user info from Google API using access token
+    const userInfoUrl = 'https://www.googleapis.com/oauth2/v2/userinfo';
+    const userInfoResponse = await axios.get(userInfoUrl, {
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    });
+
+    const userInfo = userInfoResponse.data;
+
+    // Step 3: Check if user exists in the database
+    let user = await User.findOne({ email: userInfo.email });
+
+    if (user) {
+      // User already exists, generate JWT tokens
+      const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+      // Redirect user to frontend with auth tokens
+      return res.redirect(`${frontend_redirect_url}?authToken=${accessToken}&refreshToken=${refreshToken}`);
+    } else {
+      // User doesn't exist, create a new user
+      user = new User({
+        email: userInfo.email,
+        firstName: userInfo.given_name,
+        lastName: userInfo.family_name,
+        isGoogle: true,
+      });
+
+      await user.save();
+
+      // Generate JWT tokens
+      const accessToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      const refreshToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+
+      // Redirect user to frontend with auth tokens
+      return res.redirect(`${frontend_redirect_url}?authToken=${accessToken}&refreshToken=${refreshToken}`);
+    }
+  } catch (error) {
+    console.error(error);
+    return internalServerErrorResponse('Something went wrong', res);
+  }
+};

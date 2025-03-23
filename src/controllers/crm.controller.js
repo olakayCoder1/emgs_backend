@@ -4,6 +4,11 @@ const User = require('../models/user.model');
 const Service = require('../models/service.model');
 const Notification = require('../models/notification.model');
 const { sendWhatsAppMessage } = require('../services/whatsapp.service');
+const { 
+  successResponse, 
+  badRequestResponse, 
+  internalServerErrorResponse 
+} = require('../utils/custom_response/responses');
 
 // Get all inquiries (admin only)
 exports.getAllInquiries = async (req, res) => {
@@ -25,9 +30,9 @@ exports.getAllInquiries = async (req, res) => {
     const inquiries = await Inquiry.find(query)
       .sort({ createdAt: -1 });
     
-    res.status(200).json(inquiries);
+    return successResponse(inquiries, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -37,17 +42,17 @@ exports.getInquiryById = async (req, res) => {
     const inquiry = await Inquiry.findById(req.params.id);
     
     if (!inquiry) {
-      return res.status(404).json({ message: 'Inquiry not found' });
+      return badRequestResponse('Inquiry not found', 'NOT_FOUND', 404, res);
     }
     
     // Check if user is admin or the owner of the inquiry
     if (req.user.role !== 'admin' && inquiry.userId.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to view this inquiry' });
+      return badRequestResponse('Not authorized to view this inquiry', 'FORBIDDEN', 403, res);
     }
     
-    res.status(200).json(inquiry);
+    return successResponse(inquiry, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -68,7 +73,7 @@ exports.updateInquiryStatus = async (req, res) => {
     );
     
     if (!inquiry) {
-      return res.status(404).json({ message: 'Inquiry not found' });
+      return badRequestResponse('Inquiry not found', 'NOT_FOUND', 404, res);
     }
     
     // If status changed to "in-progress", calculate response time
@@ -91,12 +96,12 @@ exports.updateInquiryStatus = async (req, res) => {
       await notification.save();
     }
     
-    res.status(200).json({
+    return successResponse({
       message: 'Inquiry status updated successfully',
       inquiry
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -108,9 +113,9 @@ exports.getUserInquiries = async (req, res) => {
     const inquiries = await Inquiry.find({ userId })
       .sort({ createdAt: -1 });
     
-    res.status(200).json(inquiries);
+    return successResponse(inquiries, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -122,7 +127,7 @@ exports.addInquiryResponse = async (req, res) => {
     
     const inquiry = await Inquiry.findById(inquiryId);
     if (!inquiry) {
-      return res.status(404).json({ message: 'Inquiry not found' });
+      return badRequestResponse('Inquiry not found', 'NOT_FOUND', 404, res);
     }
     
     // Add response to inquiry
@@ -144,12 +149,12 @@ exports.addInquiryResponse = async (req, res) => {
       );
     }
     
-    res.status(200).json({
+    return successResponse({
       message: 'Response added successfully',
       inquiry
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -164,9 +169,9 @@ exports.getFollowupInquiries = async (req, res) => {
       status: { $ne: 'closed' }
     }).sort({ followupDate: 1 });
     
-    res.status(200).json(inquiries);
+    return successResponse(inquiries, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };
 
@@ -216,7 +221,7 @@ exports.getCRMAnalytics = async (req, res) => {
       }
     ]);
     
-    res.status(200).json({
+    return successResponse({
       totalInquiries,
       byStatus: {
         new: newInquiries,
@@ -226,8 +231,8 @@ exports.getCRMAnalytics = async (req, res) => {
       },
       byService: inquiriesByService,
       averageResponseTime: avgResponseTime.length > 0 ? avgResponseTime[0].averageTime : 0
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res);
   }
 };

@@ -38,14 +38,19 @@ mongoose
   .catch((err) => console.error('MongoDB connection error:', err));
 
 // Routes
-app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
-app.use('/api/courses', courseRoutes);
-app.use('/api/lessons', lessonRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/crm', crmRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); 
+app.use('/api/v1/auth', authRoutes);
+// app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/courses', courseRoutes);
+app.use('/api/v1/lessons', lessonRoutes);
+app.use('/api/v1/services', serviceRoutes);
+app.use('/api/v1/crm', crmRoutes);
+app.use('/api/v1/admin', adminRoutes);
+// app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); 
+
+app.use('*', (req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
 // app.use('/api/payments', paymentRoutes);
 
 // Error handling middleware

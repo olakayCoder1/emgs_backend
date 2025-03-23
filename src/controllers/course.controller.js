@@ -1,7 +1,8 @@
-// src/controllers/course.controller.js
 const Course = require('../models/course.model');
 const User = require('../models/user.model');
 const Notification = require('../models/notification.model');
+const { successResponse, errorResponse, badRequestResponse } = require('../utils/custom_response/responses');
+
 
 // Get all courses
 exports.getAllCourses = async (req, res) => {
@@ -19,34 +20,38 @@ exports.getAllCourses = async (req, res) => {
       .select('title description category thumbnail isFree price')
       .sort({ createdAt: -1 });
     
-    res.status(200).json(courses);
+    return successResponse(courses, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
 // Get single course by ID
 exports.getCourseById = async (req, res) => {
   try {
+    console.log(req.params.id)
+    console.log(req.params.id)
+    console.log(req.params.id)
+    console.log(req.params.id)
     const course = await Course.findById(req.params.id)
       .populate('lessons')
       .populate('quizzes')
-      .populate('assignments');
+      // .populate('assignments');
     
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
     }
     
-    res.status(200).json(course);
+    return successResponse(course, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
 // Create new course (admin only)
 exports.createCourse = async (req, res) => {
   try {
-    const { title, description, category, isFree, price } = req.body;
+    const { title, description, category, isFree, price, isPublished } = req.body;
     
     const course = new Course({
       title,
@@ -55,17 +60,17 @@ exports.createCourse = async (req, res) => {
       isFree,
       price,
       createdBy: req.user.id,
-      isPublished: false
+      isPublished: isPublished || false,
     });
     
     await course.save();
     
-    res.status(201).json({
+    return successResponse({
       message: 'Course created successfully',
       courseId: course._id
-    });
+    }, res, 201);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -88,15 +93,15 @@ exports.updateCourse = async (req, res) => {
     );
     
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
     }
     
-    res.status(200).json({
+    return successResponse({
       message: 'Course updated successfully',
       course
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -106,12 +111,12 @@ exports.deleteCourse = async (req, res) => {
     const course = await Course.findByIdAndDelete(req.params.id);
     
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
     }
     
-    res.status(200).json({ message: 'Course deleted successfully' });
+    return successResponse({ message: 'Course deleted successfully' }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -124,13 +129,13 @@ exports.enrollInCourse = async (req, res) => {
     // Find course
     const course = await Course.findById(courseId);
     if (!course) {
-      return res.status(404).json({ message: 'Course not found' });
+      return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
     }
     
     // Check if user is already enrolled
     const user = await User.findById(userId);
     if (user.enrolledCourses.includes(courseId)) {
-      return res.status(400).json({ message: 'User already enrolled in this course' });
+      return badRequestResponse('User already enrolled in this course', 'BAD_REQUEST', 400, res);
     }
     
     // Check if course is free or payment has been made
@@ -161,9 +166,9 @@ exports.enrollInCourse = async (req, res) => {
     
     await notification.save();
     
-    res.status(200).json({ message: 'Enrolled in course successfully' });
+    return successResponse({ message: 'Enrolled in course successfully' }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -175,9 +180,9 @@ exports.getUserCourses = async (req, res) => {
     const user = await User.findById(userId)
       .populate('enrolledCourses');
     
-    res.status(200).json(user.enrolledCourses);
+    return successResponse(user.enrolledCourses, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -193,12 +198,8 @@ exports.trackProgress = async (req, res) => {
       { $addToSet: { completedLessons: lessonId } }
     );
     
-    res.status(200).json({ message: 'Progress tracked successfully' });
+    return successResponse({ message: 'Progress tracked successfully' }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
-
-
-
-

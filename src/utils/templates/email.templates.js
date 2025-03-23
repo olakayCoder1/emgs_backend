@@ -1,0 +1,45 @@
+exports.getVerificationEmailTemplate = (userName, verificationLink) => {
+    return {
+      subject: 'Verify Your Email Address',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Email Verification</h2>
+          <p>Hello ${userName},</p>
+          <p>Thank you for registering. Please verify your email address by clicking the button below:</p>
+          <p>
+            <a href="${verificationLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              Verify Email
+            </a>
+          </p>
+          <p>If the button doesn't work, you can also click on the link below or copy it into your browser:</p>
+          <p><a href="${verificationLink}">${verificationLink}</a></p>
+          <p>This link will expire in 24 hours.</p>
+          <p>Thank you!</p>
+        </div>
+      `,
+      text: `Hello ${userName},\n\nThank you for registering. Please verify your email address by clicking on the following link:\n\n${verificationLink}\n\nThis link will expire in 24 hours.\n\nThank you!`
+    };
+  };
+  
+  exports.getPasswordResetEmailTemplate = (userName, resetLink) => {
+    return {
+      subject: 'Reset Your Password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Password Reset</h2>
+          <p>Hello ${userName},</p>
+          <p>We received a request to reset your password. Click the button below to create a new password:</p>
+          <p>
+            <a href="${resetLink}" style="background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              Reset Password
+            </a>
+          </p>
+          <p>If the button doesn't work, you can also click on the link below or copy it into your browser:</p>
+          <p><a href="${resetLink}">${resetLink}</a></p>
+          <p>This link will expire in 1 hour. If you didn't request this, please ignore this email.</p>
+          <p>Thank you!</p>
+        </div>
+      `,
+      text: `Hello ${userName},\n\nWe received a request to reset your password. Please click on the following link to create a new password:\n\n${resetLink}\n\nThis link will expire in 1 hour. If you didn't request this, please ignore this email.\n\nThank you!`
+    };
+  };

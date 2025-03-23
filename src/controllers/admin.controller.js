@@ -6,6 +6,7 @@ const Service = require('../models/service.model');
 const Inquiry = require('../models/inquiry.model');
 const Payment = require('../models/payment.model');
 const Notification = require('../models/notification.model');
+const { successResponse, errorResponse, validationErrorResponse } = require('../utils/custom_response/responses');
 
 // Dashboard stats
 exports.getDashboardStats = async (req, res) => {
@@ -54,7 +55,7 @@ exports.getDashboardStats = async (req, res) => {
       }
     ]);
     
-    res.status(200).json({
+    return successResponse({
       users: {
         total: totalUsers,
         newToday: newUsersToday
@@ -73,9 +74,9 @@ exports.getDashboardStats = async (req, res) => {
         total: totalPayments,
         revenue: totalRevenue.length > 0 ? totalRevenue[0].total : 0
       }
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -86,9 +87,9 @@ exports.getAllUsers = async (req, res) => {
       .select('-password')
       .sort({ createdAt: -1 });
     
-    res.status(200).json(users);
+    return successResponse(users, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -100,12 +101,12 @@ exports.getUserById = async (req, res) => {
       .populate('enrolledCourses');
     
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return errorResponse('User not found', 'NOT_FOUND', 404, res);
     }
     
-    res.status(200).json(user);
+    return successResponse(user, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -128,15 +129,15 @@ exports.updateUser = async (req, res) => {
     ).select('-password');
     
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return errorResponse('User not found', 'NOT_FOUND', 404, res);
     }
     
-    res.status(200).json({
+    return successResponse({
       message: 'User updated successfully',
       user
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -146,12 +147,12 @@ exports.deleteUser = async (req, res) => {
     const user = await User.findByIdAndDelete(req.params.id);
     
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return errorResponse('User not found', 'NOT_FOUND', 404, res);
     }
     
-    res.status(200).json({ message: 'User deleted successfully' });
+    return successResponse({ message: 'User deleted successfully' }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -162,9 +163,9 @@ exports.getAllPayments = async (req, res) => {
       .populate('userId', 'firstName lastName email')
       .sort({ createdAt: -1 });
     
-    res.status(200).json(payments);
+    return successResponse(payments, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -180,7 +181,7 @@ exports.updatePaymentStatus = async (req, res) => {
     );
     
     if (!payment) {
-      return res.status(404).json({ message: 'Payment not found' });
+      return errorResponse('Payment not found', 'NOT_FOUND', 404, res);
     }
     
     // Notify user about payment status update
@@ -194,12 +195,12 @@ exports.updatePaymentStatus = async (req, res) => {
     
     await notification.save();
     
-    res.status(200).json({
+    return successResponse({
       message: 'Payment status updated successfully',
       payment
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -209,7 +210,7 @@ exports.sendNotification = async (req, res) => {
     const { users, title, message, type } = req.body;
     
     if (!users || !users.length) {
-      return res.status(400).json({ message: 'No users specified' });
+      return errorResponse('No users specified', 'BAD_REQUEST', 400, res);
     }
     
     // Create notifications for each user
@@ -222,12 +223,12 @@ exports.sendNotification = async (req, res) => {
     
     await Notification.insertMany(notifications);
     
-    res.status(200).json({
+    return successResponse({
       message: 'Notifications sent successfully',
       count: notifications.length
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
 
@@ -315,13 +316,13 @@ exports.getSystemAnalytics = async (req, res) => {
       { $sort: { '_id.year': 1, '_id.month': 1 } }
     ]);
     
-    res.status(200).json({
+    return successResponse({
       userGrowth,
       enrollmentTrend,
       serviceInquiries,
       revenueByMonth
-    });
+    }, res);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
 };
