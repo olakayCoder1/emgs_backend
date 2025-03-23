@@ -242,4 +242,118 @@ router.get('/user/enrolled', authenticate, courseController.getUserCourses);
  */
 router.post('/lesson/:lessonId/progress', authenticate, courseController.trackProgress);
 
+
+/**
+ * @swagger
+ * /api/v1/courses/{courseId}/rate:
+ *   post:
+ *     summary: Rate a course
+ *     description: Allows enrolled users to rate and review a course
+ *     tags:
+ *       - Courses
+ *     parameters:
+ *       - name: courseId
+ *         in: path
+ *         required: true
+ *         description: The ID of the course to rate
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               rating:
+ *                 type: number
+ *                 description: Rating between 1 and 5
+ *               review:
+ *                 type: string
+ *                 description: Optional review text
+ *     responses:
+ *       200:
+ *         description: Course rated successfully
+ *       400:
+ *         description: Invalid rating data or user not enrolled
+ *       401:
+ *         description: Unauthorized, user must be logged in
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Internal server error
+ */
+// router.post('/:courseId/rate', authenticate, courseController.rateCourse);
+
+/**
+ * @swagger
+ * /api/v1/courses/{courseId}/ratings:
+ *   get:
+ *     summary: Get course ratings
+ *     description: Retrieve all ratings and reviews for a course
+ *     tags:
+ *       - Courses
+ *     parameters:
+ *       - name: courseId
+ *         in: path
+ *         required: true
+ *         description: The ID of the course
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Course ratings and reviews
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Internal server error
+ */
+// router.get('/:courseId/ratings', courseController.getCourseRatings);
+
+/**
+ * @swagger
+ * /api/v1/courses/{courseId}/bookmark:
+ *   post:
+ *     summary: Bookmark or unbookmark a course
+ *     description: Allows users to bookmark or remove bookmark from a course
+ *     tags:
+ *       - Courses
+ *     parameters:
+ *       - name: courseId
+ *         in: path
+ *         required: true
+ *         description: The ID of the course to bookmark
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Course bookmarked or unbookmarked successfully
+ *       401:
+ *         description: Unauthorized, user must be logged in
+ *       404:
+ *         description: Course not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/:courseId/bookmark', authenticate, courseController.toggleBookmark);
+
+/**
+ * @swagger
+ * /api/v1/courses/user/bookmarked:
+ *   get:
+ *     summary: Get user's bookmarked courses
+ *     description: Retrieves all courses bookmarked by the authenticated user
+ *     tags:
+ *       - Courses
+ *     responses:
+ *       200:
+ *         description: List of bookmarked courses
+ *       401:
+ *         description: Unauthorized, user must be logged in
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/user/bookmarked', authenticate, courseController.getBookmarkedCourses);
+
+
 module.exports = router;

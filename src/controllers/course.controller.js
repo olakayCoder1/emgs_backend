@@ -2,6 +2,8 @@ const Course = require('../models/course.model');
 const User = require('../models/user.model');
 const Notification = require('../models/notification.model');
 const Progress = require('../models/progress.model');
+
+const Bookmark = require('../models/bookmark.model');
 const { successResponse, errorResponse, badRequestResponse } = require('../utils/custom_response/responses');
 
 
@@ -256,6 +258,64 @@ exports.trackProgress = async (req, res) => {
     );
     
     return successResponse({ message: 'Progress tracked successfully' }, res);
+  } catch (error) {
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
+  }
+};
+
+
+
+// Toggle bookmark (add or remove)
+exports.toggleBookmark = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.user.id;
+    
+    // Check if course exists
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
+    }
+    
+    // Check if bookmark already exists
+    const existingBookmark = await Bookmark.findOne({ userId, courseId });
+    
+    if (existingBookmark) {
+      // Remove bookmark
+      await Bookmark.findByIdAndDelete(existingBookmark._id);
+      return successResponse({ message: 'Bookmark removed successfully' }, res);
+    } else {
+      // Add bookmark
+      const newBookmark = new Bookmark({
+        userId,
+        courseId
+      });
+      
+      await newBookmark.save();
+      return successResponse({ message: 'Course bookmarked successfully' }, res);
+    }
+  } catch (error) {
+    if (error.code === 11000) { // Duplicate key error
+      return badRequestResponse('You have already bookmarked this course', 'BAD_REQUEST', 400, res);
+    }
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
+  }
+};
+
+// Get user's bookmarked courses
+exports.getBookmarkedCourses = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const bookmarks = await Bookmark.find({ userId })
+      .sort({ createdAt: -1 });
+    
+    const courseIds = bookmarks.map(bookmark => bookmark.courseId);
+    
+    const courses = await Course.find({ _id: { $in: courseIds } })
+      .select('title description category thumbnail isFree price averageRating');
+    
+    return successResponse(courses, res);
   } catch (error) {
     return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
