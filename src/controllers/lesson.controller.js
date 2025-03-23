@@ -40,7 +40,7 @@ exports.getLessonById = async (req, res) => {
 // Create new lesson (admin only)
 exports.createLesson = async (req, res) => {
   try {
-    const { title, description, courseId, videoUrl, duration, order, resources } = req.body;
+    const { title, description, courseId, videoUrl, duration, order, resources , isPublished} = req.body;
     
     // Check if course exists
     const course = await Course.findById(courseId);
@@ -56,7 +56,7 @@ exports.createLesson = async (req, res) => {
       duration,
       order,
       resources,
-      isPublished: false
+      isPublished: isPublished
     });
     
     await lesson.save();
