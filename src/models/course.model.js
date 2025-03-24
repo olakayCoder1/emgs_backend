@@ -18,6 +18,12 @@ const courseSchema = new mongoose.Schema(
     isFree: { type: Boolean, default: false },
     price: { type: Number, default: 0 },
     isPublished: { type: Boolean, default: false },
+    ratings: [{
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      rating: { type: Number, required: true, min: 1, max: 5 },
+      review: { type: String },
+      createdAt: { type: Date, default: Date.now }
+    }],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }

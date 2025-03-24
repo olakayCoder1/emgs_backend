@@ -283,7 +283,7 @@ router.post('/lesson/:lessonId/progress', authenticate, courseController.trackPr
  *       500:
  *         description: Internal server error
  */
-// router.post('/:courseId/rate', authenticate, courseController.rateCourse);
+router.post('/:courseId/rate', authenticate, courseController.rateCourse);
 
 /**
  * @swagger
@@ -308,7 +308,7 @@ router.post('/lesson/:lessonId/progress', authenticate, courseController.trackPr
  *       500:
  *         description: Internal server error
  */
-// router.get('/:courseId/ratings', courseController.getCourseRatings);
+router.get('/:courseId/ratings', courseController.getCourseRatings);
 
 /**
  * @swagger

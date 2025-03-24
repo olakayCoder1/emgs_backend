@@ -283,7 +283,7 @@ exports.toggleBookmark = async (req, res) => {
     if (existingBookmark) {
       // Remove bookmark
       await Bookmark.findByIdAndDelete(existingBookmark._id);
-      return successResponse({ message: 'Bookmark removed successfully' }, res);
+      return successResponse({ }, res,200, 'Bookmark removed successfully' );
     } else {
       // Add bookmark
       const newBookmark = new Bookmark({
@@ -292,7 +292,7 @@ exports.toggleBookmark = async (req, res) => {
       });
       
       await newBookmark.save();
-      return successResponse({ message: 'Course bookmarked successfully' }, res);
+      return successResponse({}, res,200,'Course bookmarked successfully');
     }
   } catch (error) {
     if (error.code === 11000) { // Duplicate key error
@@ -316,6 +316,87 @@ exports.getBookmarkedCourses = async (req, res) => {
       .select('title description category thumbnail isFree price averageRating');
     
     return successResponse(courses, res);
+  } catch (error) {
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
+  }
+};
+
+
+
+// Rate a course
+exports.rateCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.user.id;
+    const { rating, review } = req.body;
+    
+    // Validate rating
+    if (!rating || rating < 1 || rating > 5) {
+      return badRequestResponse('Rating must be between 1 and 5', 'BAD_REQUEST', 400, res);
+    }
+    
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
+    }
+    
+    // Check if user is enrolled in the course
+    if (!course.enrolledUsers.includes(userId)) {
+      return badRequestResponse('You must be enrolled in the course to rate it', 'BAD_REQUEST', 400, res);
+    }
+    
+    // Check if user has already rated this course
+    const existingRatingIndex = course.ratings.findIndex(r => r.userId.toString() === userId);
+    
+    if (existingRatingIndex !== -1) {
+      // Update existing rating
+      course.ratings[existingRatingIndex] = {
+        userId,
+        rating,
+        review: review || course.ratings[existingRatingIndex].review,
+        createdAt: new Date()
+      };
+    } else {
+      // Add new rating
+      course.ratings.push({
+        userId,
+        rating,
+        review,
+        createdAt: new Date()
+      });
+    }
+    
+    // Calculate new average rating
+    course.calculateAverageRating();
+    
+    await course.save();
+    
+    return successResponse({ 
+      message: 'Course rated successfully',
+      averageRating: course.averageRating
+    }, res);
+  } catch (error) {
+    return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
+  }
+};
+
+
+exports.getCourseRatings = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    
+    const course = await Course.findById(courseId)
+      .populate('ratings.userId', 'name profileImage'); // Populate user details
+    
+    if (!course) {
+      return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
+    }
+    
+    return successResponse({
+      averageRating: course.averageRating,
+      totalRatings: course.ratings.length,
+      ratings: course.ratings
+    }, res);
   } catch (error) {
     return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
