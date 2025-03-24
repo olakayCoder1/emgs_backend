@@ -6,7 +6,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/service:
+ * /api/v1/services:
  *   get:
  *     summary: Get all services
  *     description: Fetches all available services.
@@ -22,7 +22,7 @@ router.get('/', serviceController.getAllServices);
 
 /**
  * @swagger
- * /api/v1/service/{id}:
+ * /api/v1/services/{id}:
  *   get:
  *     summary: Get a specific service by ID
  *     description: Fetches the details of a specific service by its ID.
@@ -47,7 +47,7 @@ router.get('/:id', serviceController.getServiceById);
 
 /**
  * @swagger
- * /api/v1/service/category/{category}:
+ * /api/v1/services/category/{category}:
  *   get:
  *     summary: Get services by category
  *     description: Fetches services based on a specific category.
@@ -72,7 +72,7 @@ router.get('/category/:category', serviceController.getServicesByCategory);
 
 /**
  * @swagger
- * /api/service:
+ * /api/v1/services:
  *   post:
  *     summary: Create a new service
  *     description: Allows admins to create a new service.
@@ -111,7 +111,7 @@ router.post('/', [authenticate, isAdmin], serviceController.createService);
 
 /**
  * @swagger
- * /api/v1/service/{id}:
+ * /api/v1/services/{id}:
  *   put:
  *     summary: Update an existing service
  *     description: Allows admins to update the details of an existing service.
@@ -159,7 +159,7 @@ router.put('/:id', [authenticate, isAdmin], serviceController.updateService);
 
 /**
  * @swagger
- * /api/v1/service/{id}:
+ * /api/v1/services/{id}:
  *   delete:
  *     summary: Delete a specific service
  *     description: Allows admins to delete a service by its ID.
@@ -186,7 +186,7 @@ router.delete('/:id', [authenticate, isAdmin], serviceController.deleteService);
 
 /**
  * @swagger
- * /api/v1/service/inquiry:
+ * /api/v1/services/inquiry:
  *   post:
  *     summary: Create a service inquiry
  *     description: Allows users to create an inquiry for a specific service.
