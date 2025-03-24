@@ -21,6 +21,7 @@ const quizProgressSchema = new mongoose.Schema(
       required: true 
     },
     correctAnswers: { 
+
       type: Number, 
       default: 0 
     },
