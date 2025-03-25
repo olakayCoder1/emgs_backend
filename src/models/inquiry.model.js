@@ -8,7 +8,7 @@ const inquirySchema = new mongoose.Schema(
     userPhone: { type: String },
     serviceId: { type: mongoose.Schema.Types.ObjectId, ref: 'Service' },
     serviceName: { type: String, required: true },
-    message: { type: String, required: true },
+    message: { type: String, required: false },
     status: { 
       type: String, 
       enum: ['new', 'in-progress', 'resolved', 'closed'], 

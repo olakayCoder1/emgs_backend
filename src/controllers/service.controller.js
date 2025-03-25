@@ -2,28 +2,57 @@
 const Service = require('../models/service.model');
 const User = require('../models/user.model');
 const Inquiry = require('../models/inquiry.model');
+const { successResponse, badRequestResponse, internalServerErrorResponse } = require('../utils/custom_response/responses');
+
 const { sendWhatsAppMessage } = require('../services/whatsapp.service');
+const { createDefaultServices } = require('../utils/dafaultServices');
 
 // Get all services
+// exports.getAllServices = async (req, res) => {
+//   try {
+//     const { category } = req.query;
+    
+//     let query = { isActive: true };
+    
+//     // Filter by category if provided
+//     if (category) {
+//       query.category = category;
+//     }
+    
+//     const services = await Service.find(query)
+//       .sort({ category: 1 });
+    
+//     return successResponse(services,res,200,'Success');
+//   } catch (error) {
+//     return internalServerErrorResponse(error.message)
+//   }
+// };
 exports.getAllServices = async (req, res) => {
   try {
-    const { category } = req.query;
-    
-    let query = { isActive: true };
-    
-    // Filter by category if provided
-    if (category) {
-      query.category = category;
-    }
-    
-    const services = await Service.find(query)
-      .sort({ category: 1 });
-    
-    res.status(200).json(services);
+
+    // Fetch all active services and group them by category
+    const servicesByCategory = await Service.aggregate([
+      { $match: { isActive: true } }, // Only active services
+      {
+        $group: {
+          _id: "$category",  // Group by the 'category' field
+          services: { $push: "$$ROOT" },  // Push all the fields of the service into an array
+        }
+      },
+      { $sort: { _id: 1 } } // Sort the groups by category (_id)
+    ]);
+
+    // Send the success response with grouped services
+    return successResponse(servicesByCategory, res, 200, 'Success');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    // Log the error for debugging purposes
+    console.error('Error fetching and grouping services:', error);
+
+    // Send the error response
+    return internalServerErrorResponse(error.message, res);
   }
 };
+
 
 // Get service by ID
 exports.getServiceById = async (req, res) => {
@@ -31,12 +60,12 @@ exports.getServiceById = async (req, res) => {
     const service = await Service.findById(req.params.id);
     
     if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
+      return badRequestResponse('Service not found',"NOT_FOUND",404,res)
     }
     
-    res.status(200).json(service);
+    return successResponse(service,res,200,'Success');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res, 500)
   }
 };
 
@@ -55,13 +84,12 @@ exports.createService = async (req, res) => {
     });
     
     await service.save();
-    
-    res.status(201).json({
-      message: 'Service created successfully',
+
+    return successResponse({
       serviceId: service._id
-    });
+    },res,201,'Service created successfully',)
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res, 500);
   }
 };
 
@@ -84,15 +112,14 @@ exports.updateService = async (req, res) => {
     );
     
     if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
+      return badRequestResponse('Service not found',"NOT_FOUND",404,res)
     }
     
-    res.status(200).json({
-      message: 'Service updated successfully',
-      service
-    });
+    return successResponse({
+      serviceId: service._id
+    },res,200, 'Service updated successfully')
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res, 500);
   }
 };
 
@@ -102,31 +129,30 @@ exports.deleteService = async (req, res) => {
     const service = await Service.findByIdAndDelete(req.params.id);
     
     if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
+      return badRequestResponse('Service not found',"NOT_FOUND",404,res)
     }
-    
-    res.status(200).json({ message: 'Service deleted successfully' });
+    return successResponse(null,res,204, 'Service deleted successfully' )
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res, 500);
   }
 };
 
 // Create service inquiry and redirect to WhatsApp
 exports.createInquiry = async (req, res) => {
   try {
-    const { serviceId, message } = req.body;
+    const { serviceId } = req.body;
     const userId = req.user.id;
     
     // Find service
     const service = await Service.findById(serviceId);
     if (!service) {
-      return res.status(404).json({ message: 'Service not found' });
+      return badRequestResponse('Service not found',"NOT_FOUND",404,res)
     }
     
     // Find user
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return badRequestResponse('User not found',"NOT_FOUND",404,res)
     }
     
     // Create inquiry
@@ -137,7 +163,7 @@ exports.createInquiry = async (req, res) => {
       userPhone: user.phone || '',
       serviceId,
       serviceName: service.name,
-      message,
+      // message,
       status: 'new'
     });
     
@@ -145,16 +171,15 @@ exports.createInquiry = async (req, res) => {
     
     // Prepare WhatsApp link
     const whatsappLink = `https://wa.me/${service.whatsappContact}?text=${encodeURIComponent(
-      `Hello, I'm interested in ${service.name}. ${message}`
+      `Hello, I'm interested in ${service.name}. ${service.description}`
     )}`;
     
-    res.status(201).json({
-      message: 'Inquiry created successfully',
+    return successResponse({
       inquiryId: inquiry._id,
       whatsappLink
-    });
+    },res,201, 'Inquiry created successfully',)
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res, 500);
   }
 };
 
@@ -168,9 +193,9 @@ exports.getServicesByCategory = async (req, res) => {
       isActive: true 
     });
     
-    res.status(200).json(services);
+    return successResponse(services,res,200,'Success');
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    return internalServerErrorResponse(error.message, res, 500);
   }
 };
 

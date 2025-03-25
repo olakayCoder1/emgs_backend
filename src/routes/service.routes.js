@@ -1,6 +1,7 @@
 const express = require('express');
 const serviceController = require('../controllers/service.controller');
 const { authenticate, isAdmin } = require('../middleware/auth.middleware');
+const { serviceCreateValidator } = require('../validators/service.validator');
 
 const router = express.Router();
 
@@ -107,7 +108,7 @@ router.get('/category/:category', serviceController.getServicesByCategory);
  *       500:
  *         description: Internal server error
  */
-router.post('/', [authenticate, isAdmin], serviceController.createService);
+router.post('/', [authenticate, isAdmin],serviceCreateValidator, serviceController.createService);
 
 /**
  * @swagger
@@ -155,7 +156,7 @@ router.post('/', [authenticate, isAdmin], serviceController.createService);
  *       500:
  *         description: Internal server error
  */
-router.put('/:id', [authenticate, isAdmin], serviceController.updateService);
+router.put('/:id', [authenticate, isAdmin],serviceCreateValidator, serviceController.updateService);
 
 /**
  * @swagger
