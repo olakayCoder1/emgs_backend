@@ -1,7 +1,7 @@
 const express = require('express');
 const accountController = require('../controllers/account.controller');
-const authenticate = require('../middleware/auth.middleware');
-// const uploadMiddleware = require('../middlewares/upload.middleware'); 
+const {authenticate} = require('../middleware/auth.middleware');
+const uploadMiddleware = require('../middleware/upload.middleware'); 
 
 const router = express.Router();
 
@@ -87,7 +87,7 @@ router.put('/profile', authenticate, accountController.updateUserProfile);
 router.post(
   '/profile-picture', 
   authenticate, 
-  // uploadMiddleware.single('profilePicture'), 
+  uploadMiddleware.single('profilePicture'), 
   accountController.updateProfilePicture
 );
 

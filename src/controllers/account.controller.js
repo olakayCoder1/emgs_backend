@@ -26,7 +26,10 @@ exports.getUserProfile = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
-        role: user.role,
+        phone: user.phone,
+        notificationsEnabled: user.notificationsEnabled,
+        preferredLanguage: user.preferredLanguage,
+        profilePicture: user.profilePicture,
         isVerified: user.isVerified,
         enrolledCourses: user.enrolledCourses,
         completedLessons: user.completedLessons,
@@ -41,7 +44,7 @@ exports.getUserProfile = async (req, res) => {
 // Update user profile
 exports.updateUserProfile = async (req, res) => {
   try {
-    const { fullName, phone, preferredLanguage } = req.body;
+    const { fullName, phone, preferredLanguage, notificationsEnabled } = req.body;
     
     // Find user and update
     const user = await User.findByIdAndUpdate(
@@ -49,7 +52,8 @@ exports.updateUserProfile = async (req, res) => {
       { 
         fullName, 
         phone,
-        preferredLanguage 
+        preferredLanguage,
+        notificationsEnabled
       }, 
       { new: true }
     ).select('-password -__v');
@@ -64,7 +68,8 @@ exports.updateUserProfile = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
-        preferredLanguage: user.preferredLanguage
+        preferredLanguage: user.preferredLanguage,
+        notificationsEnabled: user.notificationsEnabled
       }
     }, res);
   } catch (error) {
@@ -115,9 +120,7 @@ exports.deleteProfilePicture = async (req, res) => {
       return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
     }
 
-    return successResponse({
-      message: 'Profile picture deleted successfully'
-    }, res);
+    return successResponse(null, res,204,'Profile picture deleted successfully');
   } catch (error) {
     return internalServerErrorResponse(error.message, res);
   }
@@ -147,10 +150,8 @@ exports.updateLanguagePreference = async (req, res) => {
     }
 
     return successResponse({
-      user: {
         id: user._id,
         preferredLanguage: user.preferredLanguage
-      }
     }, res);
   } catch (error) {
     return internalServerErrorResponse(error.message, res);
@@ -173,10 +174,8 @@ exports.toggleNotifications = async (req, res) => {
     }
 
     return successResponse({
-      user: {
         id: user._id,
         notificationsEnabled: user.notificationsEnabled
-      }
     }, res);
   } catch (error) {
     return internalServerErrorResponse(error.message, res);

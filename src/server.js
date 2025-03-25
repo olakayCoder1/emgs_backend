@@ -10,7 +10,7 @@ require('dotenv').config();
 
 // Import routes
 const authRoutes = require('./routes/auth.routes');
-// const accountRoutes = require('./routes/account.routes');
+const accountRoutes = require('./routes/account.routes');
 const courseRoutes = require('./routes/course.routes');
 const lessonRoutes = require('./routes/lesson.routes');
 const serviceRoutes = require('./routes/service.routes');
@@ -43,7 +43,7 @@ mongoose
 
 // Routes
 app.use('/api/v1/auth', authRoutes);
-// app.use('/api/v1/account', accountRoutes);
+app.use('/api/v1/account', accountRoutes);
 app.use('/api/v1/courses', courseRoutes);
 app.use('/api/v1/lessons', lessonRoutes);
 app.use('/api/v1/services', serviceRoutes);
