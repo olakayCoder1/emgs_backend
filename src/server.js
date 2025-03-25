@@ -18,7 +18,7 @@ const crmRoutes = require('./routes/crm.routes');
 const adminRoutes = require('./routes/admin.routes');
 const progressRoutes = require('./routes/progress.routes');
 const notificationRoutes = require('./routes/notification.routes');
-// const quizRoutes = require('./routes/quiz.routes');
+const quizRoutes = require('./routes/quiz.routes');
 const faqRoutes = require('./routes/faq.routes');
 const paymentRoutes = require('./routes/payment.routes');
 
@@ -51,7 +51,7 @@ app.use('/api/v1/crm', crmRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/progress', progressRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
-// app.use('/api/v1/quizzes', quizRoutes);
+app.use('/api/v1/quizzes', quizRoutes);
 app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/faqs', faqRoutes);
 // app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); 
