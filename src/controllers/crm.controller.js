@@ -7,12 +7,16 @@ const { sendWhatsAppMessage } = require('../services/whatsapp.service');
 const { 
   successResponse, 
   badRequestResponse, 
-  internalServerErrorResponse 
+  internalServerErrorResponse ,
+  paginationResponse
 } = require('../utils/custom_response/responses');
 
 // Get all inquiries (admin only)
 exports.getAllInquiries = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
     const { status, serviceId } = req.query;
     
     let query = {};
@@ -27,10 +31,18 @@ exports.getAllInquiries = async (req, res) => {
       query.serviceId = serviceId;
     }
     
+    const total = await Inquiry.countDocuments(query);
     const inquiries = await Inquiry.find(query)
       .sort({ createdAt: -1 });
     
-    return successResponse(inquiries, res);
+    return paginationResponse(
+      inquiries,
+      total,
+      page,
+      limit,
+      res,
+      'Inquiries retrieved successfully'
+      );
   } catch (error) {
     return internalServerErrorResponse(error.message, res);
   }
@@ -97,9 +109,8 @@ exports.updateInquiryStatus = async (req, res) => {
     }
     
     return successResponse({
-      message: 'Inquiry status updated successfully',
       inquiry
-    }, res);
+    }, res,200,'Inquiry status updated successfully');
   } catch (error) {
     return internalServerErrorResponse(error.message, res);
   }
@@ -150,9 +161,8 @@ exports.addInquiryResponse = async (req, res) => {
     }
     
     return successResponse({
-      message: 'Response added successfully',
       inquiry
-    }, res);
+    }, res,200,'Response added successfully');
   } catch (error) {
     return internalServerErrorResponse(error.message, res);
   }

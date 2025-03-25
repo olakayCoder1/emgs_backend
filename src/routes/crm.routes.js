@@ -1,6 +1,7 @@
 const express = require('express');
 const crmController = require('../controllers/crm.controller');
 const { authenticate, isAdmin } = require('../middleware/auth.middleware');
+const { inquiryStatusValidator } = require('../validators/crm.validator');
 
 const router = express.Router();
 
@@ -88,7 +89,7 @@ router.get('/inquiries/:id', authenticate, crmController.getInquiryById);
  *       500:
  *         description: Internal server error
  */
-router.put('/inquiries/:id', [authenticate, isAdmin], crmController.updateInquiryStatus);
+router.put('/inquiries/:id', [authenticate, isAdmin],inquiryStatusValidator, crmController.updateInquiryStatus);
 
 /**
  * @swagger
