@@ -4,7 +4,7 @@ const Notification = require('../models/notification.model');
 const Progress = require('../models/progress.model');
 
 const Bookmark = require('../models/bookmark.model');
-const { successResponse, errorResponse, badRequestResponse } = require('../utils/custom_response/responses');
+const { successResponse, errorResponse, badRequestResponse, paginationResponse } = require('../utils/custom_response/responses');
 
 
 // Get all courses
@@ -12,9 +12,9 @@ exports.getAllCourses = async (req, res) => {
   try {
     const { category } = req.query;
     const userId = req.user ? req.user.id : null;
-    console.log(userId)
-    console.log(userId)
-    console.log(userId)
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
     
     let query = { isPublished: true };
     
@@ -22,10 +22,17 @@ exports.getAllCourses = async (req, res) => {
     if (category) {
       query.category = category;
     }
-    
+
+    const total = await Course.countDocuments(query);
     const courses = await Course.find(query)
-      .select('title description category thumbnail isFree price')
-      .sort({ createdAt: -1 });
+          .select('title description category thumbnail isFree price')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit);
+    
+    // const courses1 = await Course.find(query)
+    //   .select('title description category thumbnail isFree price')
+    //   .sort({ createdAt: -1 });
     
     // Add progress information if user is authenticated
     if (userId) {
@@ -48,10 +55,24 @@ exports.getAllCourses = async (req, res) => {
         return courseObj;
       });
       
-      return successResponse(coursesWithProgress, res);
+      return paginationResponse(
+          coursesWithProgress, 
+          total,
+          page,
+          limit,
+          res
+        );
+      // return successResponse(coursesWithProgress, res);
     }
     
-    return successResponse(courses, res);
+    return paginationResponse(
+      courses, 
+      total,
+      page,
+      limit,
+      res
+    );
+    // return successResponse(courses, res);
   } catch (error) {
     return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
@@ -61,8 +82,6 @@ exports.getAllCourses = async (req, res) => {
 exports.getCourseById = async (req, res) => {
   try {
     const userId = req.user ? req.user.id : null;
-    console.log(userId)
-    console.log(userId)
     console.log(userId)
     
     const course = await Course.findById(req.params.id)
@@ -155,10 +174,8 @@ exports.updateCourse = async (req, res) => {
       return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
     }
     
-    return successResponse({
-      message: 'Course updated successfully',
-      course
-    }, res);
+    return successResponse({ course
+    }, res,200,'Course updated successfully');
   } catch (error) {
     return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
@@ -173,7 +190,7 @@ exports.deleteCourse = async (req, res) => {
       return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
     }
     
-    return successResponse({ message: 'Course deleted successfully' }, res);
+    return successResponse(null, res,204,'Course deleted successfully');
   } catch (error) {
     return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
@@ -257,7 +274,7 @@ exports.trackProgress = async (req, res) => {
       { $addToSet: { completedLessons: lessonId } }
     );
     
-    return successResponse({ message: 'Progress tracked successfully' }, res);
+    return successResponse({}, res,200,'Progress tracked successfully');
   } catch (error) {
     return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }
@@ -367,14 +384,15 @@ exports.rateCourse = async (req, res) => {
     }
     
     // Calculate new average rating
-    course.calculateAverageRating();
+    const averageRating = course.calculateAverageRating();
+    
+    // Update the course's average rating
+    course.averageRating = averageRating;
     
     await course.save();
     
-    return successResponse({ 
-      message: 'Course rated successfully',
-      averageRating: course.averageRating
-    }, res);
+    return successResponse({ averageRating: course.averageRating
+    }, res,200,'Course rated successfully');
   } catch (error) {
     return errorResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
   }

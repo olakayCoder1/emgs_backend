@@ -240,7 +240,7 @@ router.get('/user/enrolled', authenticate, courseController.getUserCourses);
  *       500:
  *         description: Internal server error
  */
-router.post('/lesson/:lessonId/progress', authenticate, courseController.trackProgress);
+router.post('/:courseId/lesson/:lessonId/progress', authenticate, courseController.trackProgress);
 
 
 /**

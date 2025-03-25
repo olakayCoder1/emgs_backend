@@ -98,7 +98,7 @@ router.post('/', [authenticate, isAdmin, faqValidator],faqValidator, faqControll
  *       500:
  *         description: Server error
  */
-router.put('/faqs/:faqId', [authenticate, isAdmin, faqValidator], faqController.updateFAQ);
+router.put('/:faqId', [authenticate, isAdmin, faqValidator], faqController.updateFAQ);
 
 /**
  * @swagger
@@ -129,7 +129,7 @@ router.put('/faqs/:faqId', [authenticate, isAdmin, faqValidator], faqController.
  *       500:
  *         description: Server error
  */
-router.delete('/faqs/:faqId', [authenticate, isAdmin], faqController.deleteFAQ);
+router.delete('/:faqId', [authenticate, isAdmin], faqController.deleteFAQ);
 
 /**
  * @swagger

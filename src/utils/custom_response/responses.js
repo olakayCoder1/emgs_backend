@@ -86,7 +86,6 @@ const paginationResponse = (
       status: true,
       message,
       detail: message,
-      results:data,
       metadata: {
         totalItems,
         totalPages,
@@ -96,7 +95,9 @@ const paginationResponse = (
         hasPrevPage,
         nextPage: hasNextPage ? currentPage + 1 : null,
         prevPage: hasPrevPage ? currentPage - 1 : null
-      }
+      },
+      results:data
+      
     };
   
     return res.status(statusCode).json(responseData);

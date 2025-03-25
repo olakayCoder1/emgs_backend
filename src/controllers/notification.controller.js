@@ -14,6 +14,7 @@ exports.getUserNotifications = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     
+    
     const total = await Notification.countDocuments({ userId });
     const notifications = await Notification.find({ userId })
       .sort({ createdAt: -1 })
@@ -93,9 +94,7 @@ exports.markAllAsRead = async (req, res) => {
       { isRead: true }
     );
     
-    return successResponse({ 
-      message: 'All notifications marked as read' 
-    }, res);
+    return successResponse(null, res,200, 'All notifications marked as read' );
   } catch (error) {
     return internalServerErrorResponse(error.message, res);
   }
@@ -116,9 +115,7 @@ exports.deleteNotification = async (req, res) => {
       return badRequestResponse('Notification not found', 'NOT_FOUND', 404, res);
     }
     
-    return successResponse({
-      message: 'Notification deleted successfully'
-    }, res);
+    return successResponse(null, res,204,'Notification deleted successfully');
   } catch (error) {
     return internalServerErrorResponse(error.message, res);
   }
@@ -127,13 +124,11 @@ exports.deleteNotification = async (req, res) => {
 // Delete all notifications for a user
 exports.deleteAllNotifications = async (req, res) => {
   try {
-    const userId = req.user.id;
+    // const userId = req.user.id;
     
-    await Notification.deleteMany({ userId });
+    // await Notification.deleteMany({ userId });
     
-    return successResponse({
-      message: 'All notifications deleted successfully'
-    }, res);
+    return successResponse(null, res,204,"Notification deleted successfully");
   } catch (error) {
     return internalServerErrorResponse(error.message, res);
   }

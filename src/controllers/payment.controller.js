@@ -1,0 +1,160 @@
+const Payment = require('../models/payment.model');
+const Course = require('../models/course.model');
+const Lesson = require('../models/lesson.model');
+
+const { 
+  successResponse, 
+  badRequestResponse, 
+  internalServerErrorResponse 
+} = require('../utils/custom_response/responses');
+const { default: axios } = require('axios');
+const User = require('../models/user.model');
+
+
+// Get user progress for a specific course
+exports.initiatePayment = async (req, res) => {
+  try {
+    const { itemType, itemId } = req.body;
+    const userId = req.user.id; 
+
+    // check if itemType == "course" not in course or lesson
+    if (itemType === 'service') {
+      return badRequestResponse('Service payment not available yet',"NOT_AVAILABLE",400,res );
+    }
+
+    let progress = await Payment.findOne({ userId, itemId ,itemType ,status:'completed'})
+
+    if (progress){
+      return badRequestResponse('Payment already initiated',res);
+    }
+ 
+    if (itemType == 'course') {
+      // If no progress record exists, create a new one
+      const course = await Course.findById(itemId);
+      if (!course) {
+        return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
+      }
+      
+      let payment = new Payment({
+        userId,
+        itemId,
+        itemType,
+        amount:100,
+        status:"pending",
+      });
+      
+      await payment.save();
+      return successResponse({
+        transactionRef: payment._id,
+        metadata: {
+          id: payment._id,
+          itemId,
+          itemType
+        }
+      }, res,200, 'Payment initiated successfully' );
+       
+    }else if(itemType == 'service'){
+      return badRequestResponse('Payment already initiated',"NOT_AVAILABLE",400,res );
+
+    }
+    
+    return successResponse(progress, res);
+  } catch (error) {
+    return internalServerErrorResponse(error.message, res);
+  }
+};
+
+
+
+// Get user progress for a specific course
+exports.validatePayment = async (req, res) => {
+  try {
+    const { transactionRef } = req.body;
+    const userId = req.user.id; 
+    
+    const headers = {
+      'Authorization': `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+    };
+
+    console.log(headers)
+
+    try {
+      const response = await axios.get(
+        `https://api.paystack.co/transaction/verify/${transactionRef}`,
+        { headers }
+      );
+
+      const data = response.data;
+
+      if (data?.data?.status == 'success'){
+        let metadata = data?.data?.metadata
+        let id = metadata?.id
+        let itemType = metadata?.itemType
+        let itemId = metadata?.itemId
+        let payment = await Payment.findOne({id})
+        if(payment){
+          if(payment.status == 'completed'){
+            return successResponse(null, res,200,'Payment already completed');
+          }
+
+          if(itemType == 'course'){
+            // Find course
+                const course = await Course.findById(courseId);
+                if (!course) {
+                  return badRequestResponse('Course not found', 'NOT_FOUND', 404, res);
+                }
+                
+                // Check if user is already enrolled
+                const user = await User.findById(userId);
+                if (user.enrolledCourses.includes(itemId)) {
+                  return badRequestResponse('User already enrolled in this course', 'BAD_REQUEST', 400, res);
+                }
+                
+                // Update user and course
+                await User.findByIdAndUpdate(
+                  userId,
+                  { $push: { enrolledCourses: itemId } }
+                );
+                
+                await Course.findByIdAndUpdate(
+                  courseId,
+                  { $push: { enrolledUsers: userId } }
+                );
+                
+                // Create notification
+                const notification = new Notification({
+                  userId,
+                  title: 'Course Enrollment',
+                  message: `You have successfully enrolled in ${course.title}`,
+                  type: 'course',
+                  relatedItemId: itemId
+                });
+                
+                await notification.save();
+                
+                return successResponse(null, res,200,'Enrolled in course successfully');
+          }else{
+            return badRequestResponse('Invalid payment type', 'BAD_REQUEST', 400, res);
+          }
+        }
+            
+
+      }
+      
+      return successResponse({}, res, 200, 'Payment validated successfully');
+    } catch (error) {
+      // console.log(error)
+      if (error.status == 400 || error.status == 404) {
+        return badRequestResponse("Invalid transaction ref",group = 'BAD_REQUEST', statusCode = 400, res); 
+      }
+      return internalServerErrorResponse(error.message, res);
+    }
+  } catch (error) {
+    if (error.status == 400){
+      return badRequestResponse(error.message, "NOT_AVAILABLE", 400, res);
+    }
+    // Handle other unexpected errors
+    return internalServerErrorResponse(error.message, res);
+  }
+};
+

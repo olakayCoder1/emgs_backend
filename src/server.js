@@ -20,7 +20,7 @@ const progressRoutes = require('./routes/progress.routes');
 const notificationRoutes = require('./routes/notification.routes');
 // const quizRoutes = require('./routes/quiz.routes');
 const faqRoutes = require('./routes/faq.routes');
-// const paymentRoutes = require('./routes/payment.routes');
+const paymentRoutes = require('./routes/payment.routes');
 
 // Initialize express app
 const app = express();
@@ -52,8 +52,9 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/progress', progressRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 // app.use('/api/v1/quizzes', quizRoutes);
+app.use('/api/v1/payment', paymentRoutes);
 app.use('/api/v1/faqs', faqRoutes);
-app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); 
+// app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); 
 
 app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });

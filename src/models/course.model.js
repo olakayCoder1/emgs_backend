@@ -25,9 +25,20 @@ const courseSchema = new mongoose.Schema(
       createdAt: { type: Date, default: Date.now }
     }],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    averageRating: { type: Number, default: 0 },
   },
   { timestamps: true }
+
+  
 );
+
+courseSchema.methods.calculateAverageRating = function () {
+  if (this.ratings.length === 0) return 0;
+  
+  const totalRating = this.ratings.reduce((sum, rating) => sum + rating.rating, 0);
+  return totalRating / this.ratings.length;
+};
+
 
 const Course = mongoose.model('Course', courseSchema);
 module.exports = Course;
