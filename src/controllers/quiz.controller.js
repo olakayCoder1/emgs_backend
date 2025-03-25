@@ -137,7 +137,9 @@ exports.deleteQuiz = async (req, res) => {
 };
 
 // Get all quizzes (admin can see all, regular users see only published)
-exports.getAllQuizzes = async (req, res) => {
+exports.getAllCourseQuizzes = async (req, res) => {
+
+  const { courseId } = req.params;
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -153,9 +155,9 @@ exports.getAllQuizzes = async (req, res) => {
       ];
     }
     
-    const total = await Quiz.countDocuments(query);
-    const quizzes = await Quiz.find(query)
-      .select('-questions.options.isCorrect') // Hide correct answers for security
+    const total = await Quiz.countDocuments({ courseId });
+    const quizzes = await Quiz.find({ courseId })
+      .select('-questions.options.isCorrect')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

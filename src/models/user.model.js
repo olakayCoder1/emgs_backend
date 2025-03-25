@@ -8,7 +8,14 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     phone: { type: String },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    profilePicture: { type: String, default: null },
     isVerified: { type: Boolean, default: false },
+    preferredLanguage: { 
+      type: String, 
+      enum: ['English', 'German', 'Spanish', 'French', 'Dutch'], 
+      default: 'English' 
+    },
+    notificationsEnabled: { type: Boolean, default: true },
     enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
     completedLessons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }],
     certificates: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Certificate' }],
@@ -37,10 +44,6 @@ userSchema.methods.comparePassword = async function (password) {
 
 const User = mongoose.model('User', userSchema);
 module.exports = User;
-
-
-
-
 
 
 

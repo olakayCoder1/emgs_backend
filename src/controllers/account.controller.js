@@ -1,0 +1,184 @@
+const User = require('../models/user.model');
+const { successResponse, badRequestResponse, internalServerErrorResponse } = require('../utils/custom_response/responses');
+
+// Get user profile
+exports.getUserProfile = async (req, res) => {
+  try {
+    // Find user by ID and exclude sensitive information
+    const user = await User.findById(req.user.id)
+      .select('-password -__v')
+      .populate({
+        path: 'enrolledCourses',
+        select: 'title progress'
+      })
+      .populate({
+        path: 'completedLessons',
+        select: 'title courseId'
+      });
+
+    if (!user) {
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
+    }
+
+    return successResponse({
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isVerified: user.isVerified,
+        enrolledCourses: user.enrolledCourses,
+        completedLessons: user.completedLessons,
+        completedCoursesCount: user.completedLessons.length
+      }
+    }, res);
+  } catch (error) {
+    return internalServerErrorResponse(error.message, res);
+  }
+};
+
+// Update user profile
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { fullName, phone, preferredLanguage } = req.body;
+    
+    // Find user and update
+    const user = await User.findByIdAndUpdate(
+      req.user.id, 
+      { 
+        fullName, 
+        phone,
+        preferredLanguage 
+      }, 
+      { new: true }
+    ).select('-password -__v');
+
+    if (!user) {
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
+    }
+
+    return successResponse({
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        preferredLanguage: user.preferredLanguage
+      }
+    }, res);
+  } catch (error) {
+    return internalServerErrorResponse(error.message, res);
+  }
+};
+
+// Update user profile picture
+exports.updateProfilePicture = async (req, res) => {
+  try {
+    // Check if file was uploaded
+    if (!req.file) {
+      return badRequestResponse('No profile picture uploaded', 'BAD_REQUEST', 400, res);
+    }
+
+    // Update user with new profile picture path
+    const user = await User.findByIdAndUpdate(
+      req.user.id, 
+      { profilePicture: req.file.path }, 
+      { new: true }
+    ).select('-password -__v');
+
+    if (!user) {
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
+    }
+
+    return successResponse({
+      user: {
+        id: user._id,
+        profilePicture: user.profilePicture
+      }
+    }, res);
+  } catch (error) {
+    return internalServerErrorResponse(error.message, res);
+  }
+};
+
+// Delete user profile picture
+exports.deleteProfilePicture = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id, 
+      { profilePicture: null }, 
+      { new: true }
+    ).select('-password -__v');
+
+    if (!user) {
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
+    }
+
+    return successResponse({
+      message: 'Profile picture deleted successfully'
+    }, res);
+  } catch (error) {
+    return internalServerErrorResponse(error.message, res);
+  }
+};
+
+// Update account language preference
+exports.updateLanguagePreference = async (req, res) => {
+  try {
+    const { language } = req.body;
+    
+    // List of supported languages
+    const supportedLanguages = ['English', 'German', 'Spanish', 'French', 'Dutch'];
+    
+    // Validate language
+    if (!supportedLanguages.includes(language)) {
+      return badRequestResponse('Unsupported language', 'BAD_REQUEST', 400, res);
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id, 
+      { preferredLanguage: language }, 
+      { new: true }
+    ).select('-password -__v');
+
+    if (!user) {
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
+    }
+
+    return successResponse({
+      user: {
+        id: user._id,
+        preferredLanguage: user.preferredLanguage
+      }
+    }, res);
+  } catch (error) {
+    return internalServerErrorResponse(error.message, res);
+  }
+};
+
+// Toggle notifications
+exports.toggleNotifications = async (req, res) => {
+  try {
+    const { enableNotifications } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id, 
+      { notificationsEnabled: enableNotifications }, 
+      { new: true }
+    ).select('-password -__v');
+
+    if (!user) {
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
+    }
+
+    return successResponse({
+      user: {
+        id: user._id,
+        notificationsEnabled: user.notificationsEnabled
+      }
+    }, res);
+  } catch (error) {
+    return internalServerErrorResponse(error.message, res);
+  }
+};

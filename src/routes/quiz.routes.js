@@ -192,7 +192,7 @@ router.delete('/:quizId',authenticate, isAdmin,getQuizValidator, quizController.
  *       500:
  *         description: Internal server error
  */
-router.get('/', quizController.getAllQuizzes);
+router.get('/course/:courseId', quizController.getAllCourseQuizzes);
 
 /**
  * @swagger
