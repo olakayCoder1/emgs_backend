@@ -11,7 +11,7 @@ const {
   paginationResponse
 } = require('../utils/custom_response/responses');
 
-// Get all inquiries (admin only)
+
 exports.getAllInquiries = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -48,7 +48,7 @@ exports.getAllInquiries = async (req, res) => {
   }
 };
 
-// Get inquiry by ID (admin or owner)
+
 exports.getInquiryById = async (req, res) => {
   try {
     const inquiry = await Inquiry.findById(req.params.id);
@@ -68,7 +68,7 @@ exports.getInquiryById = async (req, res) => {
   }
 };
 
-// Update inquiry status (admin only)
+
 exports.updateInquiryStatus = async (req, res) => {
   try {
     const { status, assignedTo, followupNeeded, followupDate } = req.body;
@@ -116,7 +116,7 @@ exports.updateInquiryStatus = async (req, res) => {
   }
 };
 
-// Get user's inquiries
+
 exports.getUserInquiries = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -130,7 +130,7 @@ exports.getUserInquiries = async (req, res) => {
   }
 };
 
-// Add response to inquiry (admin only)
+
 exports.addInquiryResponse = async (req, res) => {
   try {
     const { response } = req.body;
@@ -141,7 +141,7 @@ exports.addInquiryResponse = async (req, res) => {
       return badRequestResponse('Inquiry not found', 'NOT_FOUND', 404, res);
     }
     
-    // Add response to inquiry
+
     inquiry.responses = inquiry.responses || [];
     inquiry.responses.push({
       message: response,
@@ -150,8 +150,8 @@ exports.addInquiryResponse = async (req, res) => {
     });
     
     await inquiry.save();
-    
-    // Send WhatsApp message to user if phone available
+
+
     const user = await User.findById(inquiry.userId);
     if (user && user.phone) {
       await sendWhatsAppMessage(

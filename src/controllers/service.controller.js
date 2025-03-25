@@ -54,7 +54,7 @@ exports.getAllServices = async (req, res) => {
 };
 
 
-// Get service by ID
+
 exports.getServiceById = async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
@@ -69,7 +69,7 @@ exports.getServiceById = async (req, res) => {
   }
 };
 
-// Create new service (admin only)
+
 exports.createService = async (req, res) => {
   try {
     const { name, description, category, whatsappContact, price } = req.body;
@@ -93,7 +93,7 @@ exports.createService = async (req, res) => {
   }
 };
 
-// Update service (admin only)
+
 exports.updateService = async (req, res) => {
   try {
     const { name, description, category, whatsappContact, price, isActive } = req.body;
@@ -123,7 +123,7 @@ exports.updateService = async (req, res) => {
   }
 };
 
-// Delete service (admin only)
+
 exports.deleteService = async (req, res) => {
   try {
     const service = await Service.findByIdAndDelete(req.params.id);
@@ -137,7 +137,7 @@ exports.deleteService = async (req, res) => {
   }
 };
 
-// Create service inquiry and redirect to WhatsApp
+
 exports.createInquiry = async (req, res) => {
   try {
     const { serviceId } = req.body;
