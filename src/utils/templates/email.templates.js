@@ -43,3 +43,28 @@ exports.getVerificationEmailTemplate = (userName, verificationLink) => {
       text: `Hello ${userName},\n\nWe received a request to reset your password. Please click on the following link to create a new password:\n\n${resetLink}\n\nThis link will expire in 1 hour. If you didn't request this, please ignore this email.\n\nThank you!`
     };
   };
+
+
+
+
+  exports.getVerificationCodeEmailTemplate = (userName, verificationCode) => {
+    return {
+      subject: 'Your Email Verification Code',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Email Verification</h2>
+          <p>Hello ${userName},</p>
+          <p>Your verification code is:</p>
+          <div style="text-align: center; margin: 20px 0;">
+            <span style="font-size: 24px; font-weight: bold; letter-spacing: 10px; background-color: #f0f0f0; padding: 10px 20px; border-radius: 5px;">
+              ${verificationCode}
+            </span>
+          </div>
+          <p>This code will expire in 15 minutes. Do not share this code with anyone.</p>
+          <p>If you did not request this verification, please ignore this email.</p>
+          <p>Thank you!</p>
+        </div>
+      `,
+      text: `Hello ${userName},\n\nYour verification code is: ${verificationCode}\n\nThis code will expire in 15 minutes. Do not share this code with anyone.\n\nIf you did not request this verification, please ignore this email.\n\nThank you!`
+    };
+  };

@@ -15,6 +15,14 @@ const userSchema = new mongoose.Schema(
       enum: ['English', 'German', 'Spanish', 'French', 'Dutch'], 
       default: 'English' 
     },
+    verificationCode: {
+      type: String,
+      default: null
+    },
+    verificationCodeExpiry: {
+      type: Date,
+      default: null
+    },
     notificationsEnabled: { type: Boolean, default: true },
     enrolledCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
     completedLessons: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }],

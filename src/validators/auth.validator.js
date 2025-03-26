@@ -29,3 +29,29 @@ exports.resetPasswordValidator = [
     .withMessage('New password must be at least 6 characters long'),
   validateRequest
 ];
+
+
+// New validators for email verification
+exports.verifyEmailValidator = [
+  body('userId')
+    .notEmpty()
+    .withMessage('User ID is required')
+    .isMongoId()
+    .withMessage('Invalid user ID format'),
+  
+  body('verificationCode')
+    .notEmpty()
+    .withMessage('Verification code is required')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Verification code must be 6 digits')
+    .isNumeric()
+    .withMessage('Verification code must be numeric')
+];
+
+exports.resendVerificationCodeValidator = [
+  body('userId')
+    .notEmpty()
+    .withMessage('User ID is required')
+    .isMongoId()
+    .withMessage('Invalid user ID format')
+];

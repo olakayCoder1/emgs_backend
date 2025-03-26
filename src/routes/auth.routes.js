@@ -4,7 +4,9 @@ const {
     registerValidator,
     loginValidator,
     forgotPasswordValidator,
-    resetPasswordValidator
+    resetPasswordValidator,
+    resendVerificationCodeValidator,
+    verifyEmailValidator
   } = require('../validators/auth.validator');
 
 const router = express.Router();
@@ -67,7 +69,7 @@ router.post('/register', registerValidator, authController.register);
  *       500:
  *         description: Internal server error
  */
-router.get('/verify/:token', authController.verifyEmail);
+router.get('/verify/:token', authController.verifyEmailToken);
 
 /**
  * @swagger
@@ -217,5 +219,66 @@ router.post('/forgot-password', forgotPasswordValidator, authController.forgotPa
  *         description: Internal server error
  */
 router.post('/reset-password/:token', resetPasswordValidator, authController.resetPassword);
+
+/**
+ * @swagger
+ * /api/v1/auth/verify-email:
+ *   post:
+ *     summary: Verify user email with 6-digit code
+ *     description: Verifies the email of the user using a 6-digit verification code.
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: The ID of the user to verify
+ *               verificationCode:
+ *                 type: string
+ *                 description: 6-digit verification code
+ *     responses:
+ *       200:
+ *         description: Email successfully verified
+ *       400:
+ *         description: Invalid verification code or user
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/verify-email', verifyEmailValidator, authController.verifyEmail);
+
+/**
+ * @swagger
+ * /api/v1/auth/resend-verification-code:
+ *   post:
+ *     summary: Resend email verification code
+ *     description: Generates and sends a new 6-digit verification code to the user's email.
+ *     tags:
+ *       - Authentication
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: The ID of the user requesting a new verification code
+ *     responses:
+ *       200:
+ *         description: New verification code sent successfully
+ *       400:
+ *         description: Invalid user or unable to send code
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/resend-verification-code', resendVerificationCodeValidator, authController.resendVerificationCode);
+
+
 
 module.exports = router;

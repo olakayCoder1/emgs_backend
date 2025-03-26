@@ -6,6 +6,14 @@ const User = require('../models/user.model');
 const { URLSearchParams } = require('url');
 const { successResponse, badRequestResponse, internalServerErrorResponse } = require('../utils/custom_response/responses');
 
+
+
+// Generate 6-digit verification code
+const generateVerificationCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+
 // Register new user
 exports.register = async (req, res) => {
   try {
@@ -25,11 +33,19 @@ exports.register = async (req, res) => {
       phone
     });
 
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    user.verificationCode = verificationCode;
+    user.verificationCodeExpiry = new Date(Date.now() + 15 * 60 * 1000); 
+
     await user.save();
 
-    // Send verification email
-    const verificationToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    await emailService.sendVerificationEmail(user.email, user.fullName, verificationToken);
+    // // Send verification email
+    // const verificationToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    // await emailService.sendVerificationEmail(user.email, user.fullName, verificationToken);
+
+    // Send verification email with code
+    await emailService.sendVerificationCodeEmail(user.email, user.fullName, verificationCode);
 
     return successResponse({userId: user._id }, res, 201,  'User registered successfully. Please check your email to verify your account.');
   } catch (error) {
@@ -38,8 +54,72 @@ exports.register = async (req, res) => {
   }
 };
 
-// Verify email
+
+
+// Verify email with code
 exports.verifyEmail = async (req, res) => {
+  try {
+    const { userId, verificationCode } = req.body;
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
+    }
+
+    // Check if verification code is correct and not expired
+    if (
+      user.verificationCode !== verificationCode || 
+      !user.verificationCodeExpiry || 
+      user.verificationCodeExpiry < new Date()
+    ) {
+      return badRequestResponse('Invalid or expired verification code', 'INVALID_CODE', 400, res);
+    }
+
+    // Mark user as verified and clear verification code
+    user.isVerified = true;
+    user.verificationCode = null;
+    user.verificationCodeExpiry = null;
+
+    await user.save();
+
+    return successResponse({ message: 'Email verified successfully' }, res);
+  } catch (error) {
+    return badRequestResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
+  }
+};
+
+// Resend verification code
+exports.resendVerificationCode = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return badRequestResponse('User not found', 'NOT_FOUND', 404, res);
+    }
+
+    // Generate new verification code
+    const verificationCode = generateVerificationCode();
+    user.verificationCode = verificationCode;
+    user.verificationCodeExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+    await user.save();
+
+    // Send new verification email
+    await emailService.sendVerificationCodeEmail(user.email, user.fullName, verificationCode);
+
+    return successResponse({ message: 'New verification code sent' }, res);
+  } catch (error) {
+    return badRequestResponse(error.message, 'INTERNAL_SERVER_ERROR', 500, res);
+  }
+};
+
+
+
+// Verify email
+exports.verifyEmailToken = async (req, res) => {
   try {
     const { token } = req.params;
 

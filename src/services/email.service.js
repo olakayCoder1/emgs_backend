@@ -48,3 +48,18 @@ exports.sendPasswordResetEmail = async (to, name, token) => {
   
   return await sendEmail(to, subject, html, text);
 };
+
+
+
+/**
+ * Send verification code email
+ * @param {string} to - Recipient email
+ * @param {string} name - Recipient name
+ * @param {string} verificationCode - 6-digit verification code
+ * @returns {Promise} - Email sending result
+ */
+exports.sendVerificationCodeEmail = async (to, name, verificationCode) => {
+  const { subject, html, text } = emailTemplates.getVerificationCodeEmailTemplate(name, verificationCode);
+  
+  return await sendEmail(to, subject, html, text);
+};
