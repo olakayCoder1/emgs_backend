@@ -55,6 +55,70 @@ exports.register = async (req, res) => {
 };
 
 
+/**
+ * Register a new tutor
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+exports.registerTutor = async (req, res) => {
+  try {
+    const {
+      fullName,
+      email,
+      password,
+      phone,
+      // qualifications,
+      // specializations,
+      // teachingLanguages,
+      // bio
+    } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email already in use'
+      });
+    }
+
+    // Create new tutor user
+    const newTutor = new User({
+      fullName,
+      email,
+      password,
+      phone,
+      role: 'tutor',
+      // qualifications,
+      // specializations,
+      // teachingLanguages,
+      // bio,
+      // tutorApplicationStatus: 'pending',
+      // tutorApplicationDate: new Date()
+    });
+
+    // Generate verification code
+    const verificationCode = crypto.randomBytes(32).toString('hex');
+    const verificationCodeExpiry = new Date();
+    verificationCodeExpiry.setHours(verificationCodeExpiry.getHours() + 24);
+
+    newTutor.verificationCode = verificationCode;
+    newTutor.verificationCodeExpiry = verificationCodeExpiry;
+
+    await newTutor.save();
+
+    // Send verification email
+    await sendVerificationEmail(newTutor.email, verificationCode);
+
+
+    return successResponse(
+      { userId: newTutor._id }, res, 201, 'Tutor registered successfully. Please verify your email.');
+  } catch (error) {
+    console.error('Error registering tutor:', error);
+    return internalServerErrorResponse(error.message, res);
+  }
+};
+
 
 // Verify email with code
 exports.verifyEmail = async (req, res) => {

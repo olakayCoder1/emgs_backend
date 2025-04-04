@@ -44,6 +44,57 @@ const router = express.Router();
  */
 router.post('/register', registerValidator, authController.register);
 
+
+/**
+ * @swagger
+ * /api/v1/auth/register-tutor:
+ *   post:
+ *     summary: Register a new tutor
+ *     description: Creates a new tutor account in the system with additional tutor-specific information.
+ *     tags:
+ *       - Authentication
+ *       - Tutors
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fullName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               qualifications:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               specializations:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               teachingLanguages:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *               bio:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Tutor successfully registered
+ *       400:
+ *         description: Bad request, invalid input
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/register-tutor', registerValidator, authController.registerTutor);
+
+
+
 /**
  * @swagger
  * /api/v1/auth/verify/{token}:
@@ -70,6 +121,7 @@ router.post('/register', registerValidator, authController.register);
  *         description: Internal server error
  */
 router.get('/verify/:token', authController.verifyEmailToken);
+
 
 /**
  * @swagger
