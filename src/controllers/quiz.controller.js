@@ -1,6 +1,6 @@
 const Course = require('../models/course.model');
 const Quiz = require('../models/quiz.model');
-const QuizProgress = require('../models/quizProgress.model');
+const QuizProgress = require('../models/quiz-progress.model');
 const { 
   successResponse, 
   paginationResponse,
