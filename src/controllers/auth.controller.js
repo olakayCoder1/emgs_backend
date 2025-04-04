@@ -17,7 +17,7 @@ const generateVerificationCode = () => {
 // Register new user
 exports.register = async (req, res) => {
   try {
-    const { fullName, email, password, phone } = req.body;
+    const { fullName, email, password, phone , userType } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -25,12 +25,15 @@ exports.register = async (req, res) => {
       return badRequestResponse('User already exists with this email', 'BAD_REQUEST', 400, res);
     }
 
+
+    
     // Create new user
     const user = new User({
       fullName,
       email,
       password,
-      phone
+      phone,
+      role:userType,
     });
 
     // Generate verification code
