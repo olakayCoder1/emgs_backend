@@ -1,6 +1,6 @@
 const express = require('express');
 const quizController = require('../controllers/quiz.controller');
-const { authenticate, isAdmin } = require('../middleware/auth.middleware');
+const { authenticate, isAdmin ,isTutor} = require('../middleware/auth.middleware');
 const { 
     createQuizValidator,
     updateQuizValidator,
