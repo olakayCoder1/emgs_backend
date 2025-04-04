@@ -41,3 +41,11 @@ exports.isAdmin = (req, res, next) => {
   }
   next();
 };
+
+// Check if user is tutor
+exports.isTutor = (req, res, next) => {
+  if (req.user.role !== 'tutor') {
+    return res.status(403).json({ message: 'Access denied, tutor only' });
+  }
+  next();
+};

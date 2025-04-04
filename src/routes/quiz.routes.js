@@ -69,7 +69,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.post('/', authenticate,isAdmin,createQuizValidator, quizController.createQuiz);
+router.post('/', authenticate,isTutor,createQuizValidator, quizController.createQuiz);
 
 /**
  * @swagger
@@ -128,7 +128,7 @@ router.post('/', authenticate,isAdmin,createQuizValidator, quizController.create
  *       500:
  *         description: Internal server error
  */
-router.put('/:quizId', authenticate,isAdmin,updateQuizValidator, quizController.updateQuiz);
+router.put('/:quizId', authenticate,isTutor,updateQuizValidator, quizController.updateQuiz);
 
 /**
  * @swagger
@@ -158,7 +158,7 @@ router.put('/:quizId', authenticate,isAdmin,updateQuizValidator, quizController.
  *       500:
  *         description: Internal server error
  */
-router.delete('/:quizId',authenticate, isAdmin,getQuizValidator, quizController.deleteQuiz);
+router.delete('/:quizId',authenticate, isTutor,getQuizValidator, quizController.deleteQuiz);
 
 /**
  * @swagger
@@ -386,6 +386,6 @@ router.get('/progress/all', authenticate, quizController.getAllUserQuizProgress)
  *       500:
  *         description: Internal server error
  */
-router.get('/:quizId/statistics', isAdmin,getQuizStatisticsValidator, quizController.getQuizStatistics);
+router.get('/:quizId/statistics', isTutor,getQuizStatisticsValidator, quizController.getQuizStatistics);
 
 module.exports = router;

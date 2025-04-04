@@ -1,6 +1,6 @@
 const express = require('express');
 const courseController = require('../controllers/course.controller');
-const { authenticate, isAdmin } = require('../middleware/auth.middleware');
+const { authenticate, isTutor } = require('../middleware/auth.middleware');
 const { createCourseValidator } = require('../validators/course.validator');
 
 const router = express.Router();
@@ -83,7 +83,7 @@ router.get('/:id',authenticate, courseController.getCourseById);
  *       500:
  *         description: Internal server error
  */
-router.post('/', [authenticate, isAdmin],createCourseValidator, courseController.createCourse);
+router.post('/', [authenticate, isTutor],createCourseValidator, courseController.createCourse);
 
 /**
  * @swagger
@@ -131,7 +131,7 @@ router.post('/', [authenticate, isAdmin],createCourseValidator, courseController
  *       500:
  *         description: Internal server error
  */
-router.put('/:id', [authenticate, isAdmin], courseController.updateCourse);
+router.put('/:id', [authenticate, isTutor], courseController.updateCourse);
 
 /**
  * @swagger
@@ -158,7 +158,7 @@ router.put('/:id', [authenticate, isAdmin], courseController.updateCourse);
  *       500:
  *         description: Internal server error
  */
-router.delete('/:id', [authenticate, isAdmin], courseController.deleteCourse);
+router.delete('/:id', [authenticate, isTutor], courseController.deleteCourse);
 
 /**
  * @swagger

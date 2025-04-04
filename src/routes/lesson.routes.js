@@ -1,6 +1,6 @@
 const express = require('express');
 const lessonController = require('../controllers/lesson.controller');
-const { authenticate, isAdmin } = require('../middleware/auth.middleware');
+const { authenticate, isTutor } = require('../middleware/auth.middleware');
 const { 
     createLessonValidator,
     updateLessonValidator 
@@ -52,7 +52,7 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.post('/', [authenticate, isAdmin],createLessonValidator, lessonController.createLesson);
+router.post('/', [authenticate, isTutor],createLessonValidator, lessonController.createLesson);
 
 
 /**
@@ -150,7 +150,7 @@ router.get('/lesson/:id', lessonController.getLessonById);
  *       500:
  *         description: Internal server error
  */
-router.put('/lesson/:id', [authenticate, isAdmin],updateLessonValidator, lessonController.updateLesson);
+router.put('/lesson/:id', [authenticate, isTutor],updateLessonValidator, lessonController.updateLesson);
 
 /**
  * @swagger
@@ -177,6 +177,6 @@ router.put('/lesson/:id', [authenticate, isAdmin],updateLessonValidator, lessonC
  *       500:
  *         description: Internal server error
  */
-router.delete('/lesson/:id', [authenticate, isAdmin], lessonController.deleteLesson);
+router.delete('/lesson/:id', [authenticate, isTutor], lessonController.deleteLesson);
 
 module.exports = router;
