@@ -11,8 +11,8 @@ exports.registerValidator = [
   // add user type field or student, tutor, admin
   body('userType')
     .optional()
-    .isIn(['student', 'tutor', 'admin'])
-    .withMessage('User type must be either student, tutor'),
+    .isIn(['user', 'tutor', 'admin'])
+    .withMessage('User type must be either user or tutor'),
   validateRequest
 ];
 
